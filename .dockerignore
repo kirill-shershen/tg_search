@@ -1,0 +1,14 @@
+.idea
+.coverage
+.flake8
+.gitlab-ci.yml
+.pre-commit-config.yaml
+.pylintrc
+.isort.cfg
+.git
+.gitignore
+.dockerignore
+.mypy_cache
+logs
+README.md
+venv

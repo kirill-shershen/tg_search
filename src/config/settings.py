@@ -9,11 +9,14 @@ https://docs.djangoproject.com/en/4.1/topics/settings/
 For the full list of settings and their values, see
 https://docs.djangoproject.com/en/4.1/ref/settings/
 """
+import os
+import sys
 from pathlib import Path
-
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
-BASE_DIR = Path(__file__).resolve().parent.parent
 
+BASE_DIR = Path(__file__).resolve().parent.parent
+STATIC_DIR = BASE_DIR
+sys.path.insert(0, os.path.join(BASE_DIR, "apps"))
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/4.1/howto/deployment/checklist/
@@ -116,7 +119,12 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/4.1/howto/static-files/
 
 STATIC_URL = "static/"
+MEDIA_URL = "/media/"
 
+STATIC_ROOT = os.path.join(STATIC_DIR, "static/")
+MEDIA_ROOT = os.path.join(STATIC_DIR, "media/")
+
+STATICFILES_DIRS = (os.path.join(STATIC_DIR, "static"),)
 # Default primary key field type
 # https://docs.djangoproject.com/en/4.1/ref/settings/#default-auto-field
 

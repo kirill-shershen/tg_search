@@ -22,7 +22,6 @@ repos:
     hooks:
       - id: flake8
         additional_dependencies: [ flake8-typing-imports==1.10.0 ]
-        exclude: ^app/core_kit/app_utils.py
   - repo: https://github.com/asottile/reorder_python_imports
     rev: v2.5.0
     hooks:

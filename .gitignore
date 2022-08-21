@@ -9,10 +9,8 @@ docker-compose_local.yml
 *.pem
 
 # compressor files
-static/CACHE/
-src/static/CACHE/css
-src/static/CACHE/js
-src/static/app/assets
+static
+src/static
 
 #compose
 db_data*

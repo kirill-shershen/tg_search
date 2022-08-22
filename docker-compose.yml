@@ -8,7 +8,6 @@ x-web:
   environment:
     &x-web-environment
     SECRET_KEY: ${SECRET_KEY}
-    DB_HOST: ${DB_HOST}
     DB_NAME: ${DB_NAME}
     DB_PASSWORD: ${DB_PASSWORD}
     DB_USER: ${DB_USER}
@@ -16,14 +15,18 @@ x-web:
 
 services:
   db:
-    image: postgres:10
-    container_name: postgres_db
+    image: postgres:14
+    container_name: db
     restart: always
     volumes:
       - ./db_data/:/var/lib/postgresql/data
     environment:
-      - POSTGRES_USER=postgres
-      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_HOST_AUTH_METHOD=trust
+      - POSTGRES_USER=${DB_USER}
+      - POSTGRES_PASSWORD=${DB_PASSWORD}
+      - POSTGRES_DB=${DB_NAME}
+    ports:
+      - 5432:5432
 
   web:
     <<: *x-web-common

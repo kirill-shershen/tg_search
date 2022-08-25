@@ -25,9 +25,6 @@ sys.path.insert(0, os.path.join(BASE_DIR, "apps"))
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = "django-insecure-fm@ve9z1m=*=!2r!@tm!#h@t+t=y1nbouz#1+0%%tg-ce*f)6m"
 
-# SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
-
 ALLOWED_HOSTS = ["*"]
 
 AUTH_USER_MODEL = "users.User"
@@ -49,6 +46,7 @@ THIRD_PARTY = [
 LOCAL_APPS = [
     "apps.bot",
     "apps.users",
+    "apps.tg_client",
 ]
 
 INSTALLED_APPS = DJANGO_APPS + THIRD_PARTY + LOCAL_APPS
@@ -83,22 +81,12 @@ TEMPLATES = [
 
 WSGI_APPLICATION = "config.wsgi.application"
 
-
-# Database
-# https://docs.djangoproject.com/en/4.1/ref/settings/#databases
-
-
 DATABASES = {
     "default": {
-        "ENGINE": "django.db.backends.postgresql",
-        "NAME": os.environ.get("DB_NAME", "postgres"),
-        "USER": os.environ.get("DB_USER", "postgres"),
-        "PASSWORD": os.environ.get("DB_PASSWORD", "postgres"),
-        "HOST": os.environ.get("DB_HOST", "db"),
-        "PORT": os.environ.get("DB_PORT", 5432),
+        "ENGINE": "django.db.backends.sqlite3",
+        "NAME": BASE_DIR / "db.sqlite3",
     }
 }
-
 
 # Password validation
 # https://docs.djangoproject.com/en/4.1/ref/settings/#auth-password-validators

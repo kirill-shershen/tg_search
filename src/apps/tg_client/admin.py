@@ -1,6 +1,7 @@
 from asyncio import run
 
 from apps.tg_client.helpers import login_user
+from apps.tg_client.helpers import logout_user
 from apps.tg_client.helpers import send_code_request
 from apps.tg_client.models import ClientSession
 from apps.tg_client.models import Login
@@ -15,7 +16,7 @@ def send_request_code(modeladmin, request, queryset):
         qs.save()
 
 
-send_request_code.short_description = "send request code"  # type: ignore
+send_request_code.short_description = "Send request code"  # type: ignore
 
 
 def login(modeladmin, request, queryset):
@@ -32,7 +33,17 @@ def login(modeladmin, request, queryset):
         print(f"user authorized: {is_user_authorized}")
 
 
-send_request_code.short_description = "send request code"  # type: ignore
+login.short_description = "Login"  # type: ignore
+
+
+def logout(modeladmin, request, queryset):
+    for qs in queryset:
+        result = run(logout_user(client_session=qs.client_session))
+        qs.delete()
+        print(result)
+
+
+logout.short_description = "Logout"  # type: ignore
 
 
 class ClientSessionAdmin(admin.ModelAdmin):
@@ -42,7 +53,7 @@ class ClientSessionAdmin(admin.ModelAdmin):
 
 @admin.register(Login)
 class LoginAdmin(admin.ModelAdmin):
-    actions = [send_request_code, login]
+    actions = [send_request_code, login, logout]
     list_display = [
         "id",
         "client_session",

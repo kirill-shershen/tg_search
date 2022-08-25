@@ -17,6 +17,13 @@ async def login_user(client_session, phone_number, code, password, phone_code_ha
     return result
 
 
+async def logout_user(client_session):
+    telegram_client = TelegramClient(DjangoSession(client_session=client_session), TELEGRAM_API_ID, TELEGRAM_API_HASH)
+    await telegram_client.connect()
+    await telegram_client.log_out()
+    return "OK"
+
+
 async def send_code_request(client_session, phone_number):
     telegram_client = TelegramClient(DjangoSession(client_session=client_session), TELEGRAM_API_ID, TELEGRAM_API_HASH)
     await telegram_client.connect()

@@ -11,9 +11,11 @@ from django.contrib import admin
 
 def send_request_code(modeladmin, request, queryset):
     for qs in queryset:
-        hash_code = run(send_code_request(qs.client_session, qs.phone_number))
-        qs.hash_code = hash_code
-        qs.save()
+        if not qs.have_to_send_code:
+            hash_code = run(send_code_request(qs.client_session, qs.phone_number))
+            qs.hash_code = hash_code
+            qs.have_to_send_code = False
+            qs.save()
 
 
 send_request_code.short_description = "Send request code"  # type: ignore

@@ -17,7 +17,7 @@ from django.db import transaction
 def send_request_code(modeladmin, request, queryset):
     """Send requests and receive hash codes for all selected Logins"""
     for qs in queryset:
-        if not qs.have_to_send_code:
+        if qs.have_to_send_code:
             hash_code = run(send_code_request(qs.client_session, qs.phone_number))
             qs.hash_code = hash_code
             qs.have_to_send_code = False
@@ -27,6 +27,7 @@ def send_request_code(modeladmin, request, queryset):
 @admin.action(description="Login")
 def login(modeladmin, request, queryset):
     """Send requests and receive hash codes for all selected Logins"""
+    is_user_authorized = False
     for qs in queryset:
         if qs.bot_token:
             is_user_authorized = run(login_bot(client_session=qs.client_session, bot_token=qs.bot_token))

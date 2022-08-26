@@ -1,15 +1,21 @@
 from asyncio import run
 
+from apps.tg_client.helpers import login_bot
 from apps.tg_client.helpers import login_user
 from apps.tg_client.helpers import logout_user
 from apps.tg_client.helpers import send_code_request
 from apps.tg_client.models import ClientSession
 from apps.tg_client.models import Login
+from apps.tg_client.models import LoginStatus
 from apps.tg_client.models import Session
+from config.logger import logger
 from django.contrib import admin
+from django.db import transaction
 
 
+@admin.action(description="Send request code")
 def send_request_code(modeladmin, request, queryset):
+    """Send requests and receive hash codes for all selected Logins"""
     for qs in queryset:
         if not qs.have_to_send_code:
             hash_code = run(send_code_request(qs.client_session, qs.phone_number))
@@ -18,34 +24,39 @@ def send_request_code(modeladmin, request, queryset):
             qs.save()
 
 
-send_request_code.short_description = "Send request code"  # type: ignore
-
-
+@admin.action(description="Login")
 def login(modeladmin, request, queryset):
+    """Send requests and receive hash codes for all selected Logins"""
     for qs in queryset:
-        is_user_authorized = run(
-            login_user(
-                client_session=qs.client_session,
-                phone_number=qs.phone_number,
-                code=qs.code,
-                password=qs.passcode,
-                phone_code_hash=qs.hash_code,
+        if qs.bot_token:
+            is_user_authorized = run(login_bot(client_session=qs.client_session, bot_token=qs.bot_token))
+            logger.debug(f"{qs.bot_token} authorized {is_user_authorized}")
+        elif all([qs.code, qs.phone_number, qs.hash_code]):
+            is_user_authorized = run(
+                login_user(
+                    client_session=qs.client_session,
+                    phone_number=qs.phone_number,
+                    code=qs.code,
+                    password=qs.passcode,
+                    phone_code_hash=qs.hash_code,
+                )
             )
-        )
-        print(f"user authorized: {is_user_authorized}")
+            logger.debug(f"{qs.phone_number} authorized {is_user_authorized}")
+        if is_user_authorized:
+            qs.client_session.login_status = LoginStatus.LOGIN_WAITING_FOR_TELEGRAM_CLIENT
+            qs.client_session.save()
 
 
-login.short_description = "Login"  # type: ignore
-
-
+@admin.action(description="Logout")
 def logout(modeladmin, request, queryset):
+    """Log-out all selected Logins"""
     for qs in queryset:
         result = run(logout_user(client_session=qs.client_session))
-        qs.delete()
+        qs.code = ""
+        qs.hash_code = ""
+        qs.client_session.login_status = LoginStatus.LOGIN_REQUIRED
+        qs.save()
         print(result)
-
-
-logout.short_description = "Logout"  # type: ignore
 
 
 class ClientSessionAdmin(admin.ModelAdmin):
@@ -57,7 +68,6 @@ class ClientSessionAdmin(admin.ModelAdmin):
 class LoginAdmin(admin.ModelAdmin):
     actions = [send_request_code, login, logout]
     list_display = [
-        "id",
         "client_session",
         "have_to_send_code",
         "bot_token",
@@ -65,9 +75,8 @@ class LoginAdmin(admin.ModelAdmin):
         "code",
         "passcode",
         "hash_code",
-        "created_at",
     ]
-    list_filter = ["created_at", "client_session__name"]
+    list_filter = ["client_session__name"]
 
 
 class SessionAdmin(admin.ModelAdmin):

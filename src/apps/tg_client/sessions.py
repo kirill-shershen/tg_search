@@ -111,7 +111,7 @@ class DjangoSession(MemorySession):
 
         """Deletes the current session file"""
         try:
-            self.client_session.delete()
+            self.client_session.session.delete()
             return True
         except Exception:
             logging.exception("Failed to delete session")

@@ -2,8 +2,27 @@ from core.models import TimeStampedModel
 from django.db import models
 
 
-class Login(TimeStampedModel):
-    client_session = models.ForeignKey("ClientSession", on_delete=models.CASCADE, verbose_name="Client session")
+# class LoginQueryset(models.QuerySet):
+#
+#     def have_to_send_code(self):
+#         return self.filter(have_to_send_code=True)
+#
+#     def have_to_login(self):
+#         return self.filter(code__isnull=False)
+#
+#
+# class LoginManager(models.Manager):
+#     def get_queryset(self):
+#         return LoginQueryset(self.model, using=self._db)
+
+
+class Login(models.Model):
+    client_session = models.OneToOneField(
+        "ClientSession",
+        on_delete=models.CASCADE,
+        primary_key=True,
+        verbose_name="Client Session",
+    )
     have_to_send_code = models.BooleanField(default=True, verbose_name="Have to send code")
     bot_token = models.CharField(
         max_length=255,
@@ -36,8 +55,10 @@ class Login(TimeStampedModel):
         verbose_name="Hash code",
     )
 
+    # objects = LoginManager()
+
     def __str__(self):
-        return f"{self.client_session} {self.phone_number}"
+        return f"{self.client_session}"
 
 
 class LoginStatus(models.IntegerChoices):
@@ -108,3 +129,6 @@ class Session(models.Model):
         )
         verbose_name = "Session"
         verbose_name_plural = "Sessions"
+
+    def __str__(self):
+        return f"{self.client_session}"

@@ -91,7 +91,7 @@ class DjangoSession(MemorySession):
         )
 
     def set_update_state(self, entity_id, state):
-        self.client_session.updatestate_set.update_or_create(
+        self.client_session.session.updatestate_set.update_or_create(
             pk=entity_id,
             defaults={
                 "pts": state.pts,

@@ -2,20 +2,6 @@ from core.models import TimeStampedModel
 from django.db import models
 
 
-# class LoginQueryset(models.QuerySet):
-#
-#     def have_to_send_code(self):
-#         return self.filter(have_to_send_code=True)
-#
-#     def have_to_login(self):
-#         return self.filter(code__isnull=False)
-#
-#
-# class LoginManager(models.Manager):
-#     def get_queryset(self):
-#         return LoginQueryset(self.model, using=self._db)
-
-
 class Login(models.Model):
     client_session = models.OneToOneField(
         "ClientSession",
@@ -32,8 +18,7 @@ class Login(models.Model):
     )
     phone_number = models.CharField(
         max_length=20,
-        null=True,
-        blank=True,
+        null=False,
         verbose_name="Phone number",
     )
     code = models.CharField(
@@ -54,8 +39,6 @@ class Login(models.Model):
         blank=True,
         verbose_name="Hash code",
     )
-
-    # objects = LoginManager()
 
     def __str__(self):
         return f"{self.client_session}"

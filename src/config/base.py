@@ -27,7 +27,7 @@ SECRET_KEY = "django-insecure-fm@ve9z1m=*=!2r!@tm!#h@t+t=y1nbouz#1+0%%tg-ce*f)6m
 
 ALLOWED_HOSTS = ["*"]
 
-AUTH_USER_MODEL = "users.User"
+AUTH_USER_MODEL = "auth.User"
 
 # Application definition
 
@@ -45,7 +45,6 @@ THIRD_PARTY = [
 
 LOCAL_APPS = [
     "apps.bot",
-    "apps.users",
     "apps.tg_client",
 ]
 

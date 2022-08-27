@@ -1,8 +1,8 @@
-import logging
-
 from apps.tg_client.models import ClientSession
+from apps.tg_client.models import Login
 from apps.tg_client.models import LoginStatus
 from apps.tg_client.sessions import DjangoSession
+from config.logger import logger
 from config.telegram import CLIENT_SESSION_BOT
 from config.telegram import CLIENT_SESSION_SEARCH
 from config.telegram import TELEGRAM_API_HASH
@@ -70,7 +70,7 @@ async def connect_client(client_session: ClientSession) -> None:
     if not await telegram_client.is_user_authorized():
         client_session.login_status = LoginStatus.LOGIN_REQUIRED
         client_session.save()
-        logging.critical(f"Authorization failed for client: {client_session.name}")
+        logger.critical(f"Authorization failed for client: {client_session.name}")
         return
     if client_session.login_status != LoginStatus.LOGIN_DONE:
         client_session.login_status = LoginStatus.LOGIN_DONE
@@ -78,5 +78,23 @@ async def connect_client(client_session: ClientSession) -> None:
 
 
 async def re_connect_clients() -> None:
-    telegram_client = get_client()
-    await telegram_client.connect()
+    for login in Login.objects.filter(have_to_send_code=True):
+        phone_hash = await send_code_request(login.client_session, login.phone_number)
+        login.hash_code = phone_hash
+        login.have_to_send_code = False
+        login.save()
+    for login in Login.objects.filter(code__isnull=False):
+        if login.bot_token:
+            login_result = await login_bot(login.client_session, login.bot_token)
+        else:
+            login_result = await login_user(
+                login.client_session, login.phone_number, login.code, login.passcode, login.hash_code
+            )
+        if login_result:
+            login.client_session.login_status = LoginStatus.LOGIN_WAITING_FOR_TELEGRAM_CLIENT
+            login.client_session.save()
+            logger.debug(f"Login successfully for client: {login.client_session.name}")
+        else:
+            logger.debug(f"Login failed for client: {login.client_session.name}")
+        for client in ClientSession.objects.filter(login_status=LoginStatus.LOGIN_WAITING_FOR_TELEGRAM_CLIENT):
+            await connect_client(client_session=client)

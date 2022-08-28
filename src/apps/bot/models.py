@@ -1,4 +1,5 @@
 from config.telegram import USER_PROFILE
+from core.models import GetOrNoneManager
 from core.models import TimeStampedModel
 from django.db import models
 from django.db.models import Index
@@ -28,6 +29,8 @@ class UserChat(TimeStampedModel):
     username = models.CharField(max_length=40, null=False, default="", help_text="telegram chat username")
     title = models.CharField(max_length=255, null=False, default="", help_text="telegram chat title")
     chat_id = models.PositiveIntegerField(null=False, default=0, help_text="telegram chat id")
+
+    objects = GetOrNoneManager()
 
     class Meta:
         verbose_name = "User Chat"

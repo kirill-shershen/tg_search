@@ -1,3 +1,5 @@
+from typing import Optional
+
 from apps.tg_client.models import ClientSession
 from apps.tg_client.models import Login
 from apps.tg_client.models import LoginStatus
@@ -5,10 +7,16 @@ from apps.tg_client.sessions import DjangoSession
 from config.logger import logger
 from config.telegram import CLIENT_SESSION_BOT
 from config.telegram import CLIENT_SESSION_SEARCH
+from config.telegram import MAX_ANSWERS_PER_REQUEST
 from config.telegram import TELEGRAM_API_HASH
 from config.telegram import TELEGRAM_API_ID
 from telethon import TelegramClient
 from telethon.errors import SessionPasswordNeededError
+from telethon.tl import functions
+from telethon.tl import types
+from telethon.tl.types import InputPeerChat
+from telethon.tl.types import InputPeerEmpty
+from telethon.tl.types import User
 
 
 def get_client(client_session: ClientSession = None) -> TelegramClient:
@@ -98,3 +106,54 @@ async def re_connect_clients() -> None:
             logger.debug(f"Login failed for client: {login.client_session.name}")
         for client in ClientSession.objects.filter(login_status=LoginStatus.LOGIN_WAITING_FOR_TELEGRAM_CLIENT):
             await connect_client(client_session=client)
+
+
+async def normalize_results(client: TelegramClient, results: list) -> list:
+    if not results:
+        return []
+
+    messages = []
+    if len(results) == 1:
+        for message in results[0].messages:
+            logger.debug(f"{message=}")
+            user_info = await client.get_entity(message.from_id)
+            user = user_info.username if user_info.username else user_info.first_name
+            messages.append(
+                {
+                    "message_date": message.date,
+                    "from_user_name": user,
+                    "from_user_id": user_info.id,
+                    "message": message.message,
+                }
+            )
+    return messages
+
+
+async def get_search_request(query: str, chats: list) -> list:
+    telegram_client = get_client()
+    await telegram_client.start()
+    results = []
+    for chat in chats:
+        results.append(
+            await telegram_client(
+                functions.messages.SearchRequest(
+                    filter=types.InputMessagesFilterEmpty(),
+                    peer=chat.username,
+                    q=query,
+                    min_date=None,
+                    max_date=None,
+                    offset_id=0,
+                    add_offset=0,
+                    limit=MAX_ANSWERS_PER_REQUEST,
+                    max_id=0,
+                    min_id=0,
+                    hash=0,
+                    from_id=InputPeerEmpty(),
+                    top_msg_id=0,
+                )
+            )
+        )
+    results = await normalize_results(client=telegram_client, results=results)
+
+    await telegram_client.disconnect()
+    return results

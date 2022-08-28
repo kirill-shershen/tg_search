@@ -1,3 +1,5 @@
+from datetime import datetime
+
 from config.telegram import USER_PROFILE
 from core.models import GetOrNoneManager
 from core.models import TimeStampedModel
@@ -37,10 +39,16 @@ class UserChat(TimeStampedModel):
         verbose_name_plural = "User Chat"
 
 
+class SearchQueryManager(models.Manager):
+    def today(self, **kwargs):
+        return self.filter(created_at__date=datetime.today().date(), **kwargs)
+
+
 class SearchQuery(TimeStampedModel):
-    user = models.ForeignKey("bot.User", on_delete=models.CASCADE, null=True, related_name="queries")
-    chat = models.ForeignKey("bot.UserChat", on_delete=models.CASCADE, null=True, related_name="queries")
+    user = models.ForeignKey("bot.User", on_delete=models.CASCADE, null=False, related_name="queries")
     query = models.CharField(max_length=100, null=False, help_text="query string")
+
+    objects = SearchQueryManager()
 
     class Meta:
         verbose_name = "Search Query"

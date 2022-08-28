@@ -5,18 +5,30 @@ from typing import Union
 from apps.bot.helpers import get_add_chat_message
 from apps.bot.helpers import get_add_chat_reject_max
 from apps.bot.helpers import get_delete_chat_message
+from apps.bot.helpers import get_search_message
 from apps.bot.helpers import get_start_message
+from apps.bot.models import QueryResult
+from apps.bot.models import SearchQuery
 from apps.bot.models import User
 from apps.bot.models import UserChat
 from apps.tg_client.helpers import get_bot_client
+from apps.tg_client.helpers import get_search_request
 from apps.tg_client.helpers import re_connect_clients
 from config.logger import logger
 from config.telegram import BOT_RECONNECT_TIMER_MIN
 from config.telegram import CHAT_TEXT_ADD_CHAT
 from config.telegram import CHAT_TEXT_DELETE_CHAT
+from config.telegram import CHAT_TEXT_SEARCH
+from config.telegram import MAX_ANSWERS_PER_REQUEST
 from config.telegram import MAX_GROUPS_PER_USER
+from config.telegram import MAX_REQUESTS_PER_DAY
 from telethon import Button
 from telethon import events
+from telethon.tl import functions
+from telethon.tl import types
+from telethon.tl.types import InputPeerChat
+from telethon.tl.types import InputPeerEmpty
+from telethon.tl.types import PeerChat
 
 client = get_bot_client()
 client.start()
@@ -31,7 +43,7 @@ def get_keyboard():
         [
             Button.text(CHAT_TEXT_ADD_CHAT, resize=True, single_use=False),
             Button.text(CHAT_TEXT_DELETE_CHAT, single_use=False),
-            Button.text("🔍 поиск", single_use=False),
+            Button.text(CHAT_TEXT_SEARCH, single_use=False),
         ]
     ]
 
@@ -99,6 +111,44 @@ async def start(event):
         await client.send_message(entity=event.chat_id, message=get_start_message(tg_user.name), buttons=get_keyboard())
 
 
+@client.on(events.NewMessage(pattern=CHAT_TEXT_SEARCH))
+async def search(event):
+    async with client.conversation(event.chat) as conversation:
+        tg_user = get_tg_user(event)
+        # check for chat exist
+        chat_list = UserChat.objects.filter(user=tg_user)
+        if len(chat_list) == 0:
+            return await conversation.send_message(message="Nowhere to search")
+        # check for request limit
+        today_requests: list = SearchQuery.objects.today()
+        requests_per_day_left = MAX_REQUESTS_PER_DAY - len(today_requests)
+        if requests_per_day_left == 0:
+            await conversation.send_message(message="daily request limit reached", buttons=get_keyboard())
+            return await asyncio.sleep(60)
+
+        await conversation.send_message(
+            get_search_message(chat_list=chat_list, request_count=requests_per_day_left),
+            buttons=get_cancel_keyboard(),
+        )
+        while True:
+            try:
+                search = await conversation.get_response()
+            except TimeoutError:
+                await conversation.cancel()
+                return await event.respond("Выберите действие", buttons=get_keyboard())
+            search = search.message.strip()
+            if search.lower() == "отмена":
+                await conversation.cancel()
+                return await event.respond("Выберите действие", buttons=get_keyboard())
+            else:
+                break
+
+        query_search = SearchQuery.objects.create(user=tg_user, query=search)
+        results = await get_search_request(query=search, chats=chat_list)
+        logger.debug(f"{results=}")
+        QueryResult.objects.bulk_create([QueryResult(query=query_search, **result) for result in results])
+
+
 @client.on(events.NewMessage(pattern=CHAT_TEXT_ADD_CHAT))
 async def add_chat(event):
     async with client.conversation(event.chat) as conversation:
@@ -106,9 +156,8 @@ async def add_chat(event):
 
         chat_list = UserChat.objects.filter(user=tg_user)
         if len(chat_list) >= MAX_GROUPS_PER_USER:
-            await conversation.send_message(get_add_chat_reject_max(), buttons=get_keyboard())
-            await conversation.cancel_all()
-            return
+            await conversation.cancel()
+            return await conversation.send_message(get_add_chat_reject_max(), buttons=get_keyboard())
 
         await conversation.send_message(get_add_chat_message(chat_list), buttons=get_cancel_keyboard())
         while True:
@@ -119,6 +168,7 @@ async def add_chat(event):
                 return await event.respond("Выберите действие", buttons=get_keyboard())
             chat_name = chat_name.message.strip()
             if chat_name.lower() == "отмена":
+                await conversation.cancel()
                 return await event.respond("Выберите действие", buttons=get_keyboard())
             if chat_name:
                 logger.debug(f"{chat_name=}")
@@ -128,6 +178,7 @@ async def add_chat(event):
                     logger.error(f"get_entity error {str(e)}")
                     chat = None
             if not chat:
+                await conversation.cancel()
                 await conversation.send_message("chat is wrong. try again", buttons=get_cancel_keyboard())
                 continue
             else:

@@ -1,6 +1,7 @@
 import os
 
-USER_PROFILE = "tg://user?id="
+MESSAGE_DEEP_LINK = "tg://openmessage?chat_id={chat_id}&message_id={message_id}"
+MESSAGE_LINK = "https://t.me/{chat_id}/{message_id}"
 
 TELEGRAM_API_KEY = os.environ.get("TELEGRAM_API_KEY", None)
 TELEGRAM_API_ID = os.environ.get("TELEGRAM_API_ID", None)
@@ -19,3 +20,4 @@ CHAT_TEXT_ADD_CHAT = os.environ.get("CHAT_TEXT_ADD_CHAT", "➕ чат")
 CHAT_TEXT_ADD_CHAT_REJECT_MAX = os.environ.get("CHAT_TEXT_ADD_CHAT_REJECT_MAX", "max chat per user")
 CHAT_TEXT_DELETE_CHAT = os.environ.get("CHAT_TEXT_DELETE_CHAT", "➖ чат")
 CHAT_TEXT_SEARCH = os.environ.get("CHAT_TEXT_SEARCH", "🔍 поиск")
+CHAT_TEXT_SEARCH_RESULT = os.environ.get("CHAT_TEXT_SEARCH_RESULT", "result")

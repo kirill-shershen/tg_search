@@ -5,6 +5,7 @@ from typing import Union
 from apps.bot.helpers import get_add_chat_message
 from apps.bot.helpers import get_add_chat_reject_max
 from apps.bot.helpers import get_delete_chat_message
+from apps.bot.helpers import get_result_message
 from apps.bot.helpers import get_search_message
 from apps.bot.helpers import get_start_message
 from apps.bot.models import QueryResult
@@ -123,8 +124,7 @@ async def search(event):
         today_requests: list = SearchQuery.objects.today()
         requests_per_day_left = MAX_REQUESTS_PER_DAY - len(today_requests)
         if requests_per_day_left == 0:
-            await conversation.send_message(message="daily request limit reached", buttons=get_keyboard())
-            return await asyncio.sleep(60)
+            return await event.respond(message="daily request limit reached", buttons=get_keyboard())
 
         await conversation.send_message(
             get_search_message(chat_list=chat_list, request_count=requests_per_day_left),
@@ -138,7 +138,6 @@ async def search(event):
                 return await event.respond("Выберите действие", buttons=get_keyboard())
             search = search.message.strip()
             if search.lower() == "отмена":
-                await conversation.cancel()
                 return await event.respond("Выберите действие", buttons=get_keyboard())
             else:
                 break
@@ -147,6 +146,9 @@ async def search(event):
         results = await get_search_request(query=search, chats=chat_list)
         logger.debug(f"{results=}")
         QueryResult.objects.bulk_create([QueryResult(query=query_search, **result) for result in results])
+        await conversation.send_message(
+            message=get_result_message(messages=results, query=search), buttons=get_keyboard(), parse_mode="html"
+        )
 
 
 @client.on(events.NewMessage(pattern=CHAT_TEXT_ADD_CHAT))
@@ -168,7 +170,7 @@ async def add_chat(event):
                 return await event.respond("Выберите действие", buttons=get_keyboard())
             chat_name = chat_name.message.strip()
             if chat_name.lower() == "отмена":
-                await conversation.cancel()
+                # await conversation.cancel()
                 return await event.respond("Выберите действие", buttons=get_keyboard())
             if chat_name:
                 logger.debug(f"{chat_name=}")

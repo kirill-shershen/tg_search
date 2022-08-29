@@ -1,6 +1,5 @@
 from datetime import datetime
 
-from config.telegram import USER_PROFILE
 from core.models import GetOrNoneManager
 from core.models import TimeStampedModel
 from django.db import models
@@ -19,7 +18,9 @@ class User(TimeStampedModel):
     Index(fields=["user_id"], name="telegram_user_id_idx")
 
     def __str__(self):
-        return f"PK {self.id} TG:{self.username}"
+        return f"TG:{self.username}"
+
+    __repr__ = __str__
 
     @property
     def name(self):
@@ -31,6 +32,11 @@ class UserChat(TimeStampedModel):
     username = models.CharField(max_length=40, null=False, default="", help_text="telegram chat username")
     title = models.CharField(max_length=255, null=False, default="", help_text="telegram chat title")
     chat_id = models.PositiveIntegerField(null=False, default=0, help_text="telegram chat id")
+
+    def __str__(self):
+        return f"{self.user} {self.username}"
+
+    __repr__ = __str__
 
     objects = GetOrNoneManager()
 
@@ -50,6 +56,11 @@ class SearchQuery(TimeStampedModel):
 
     objects = SearchQueryManager()
 
+    def __str__(self):
+        return f"{self.user}: {self.query}"
+
+    __repr__ = __str__
+
     class Meta:
         verbose_name = "Search Query"
         verbose_name_plural = "Search Query"
@@ -58,13 +69,16 @@ class SearchQuery(TimeStampedModel):
 class QueryResult(TimeStampedModel):
     query = models.ForeignKey("bot.SearchQuery", on_delete=models.CASCADE, null=True, related_name="results")
     message = models.CharField(max_length=100, null=False, help_text="query result")
-    message_date = models.DateField(blank=True, null=True, help_text="telegram message date")
+    message_date = models.DateTimeField(blank=True, null=True, help_text="telegram message date")
+    message_id = models.IntegerField(null=False, help_text="message id")
+    chat_id = models.IntegerField(null=False, help_text="chat id")
+    chat_username = models.CharField(max_length=100, default="", null=False, help_text="chat username")
     from_user_id = models.IntegerField(null=False, help_text="message author id")
-    from_user_name = models.CharField(max_length=100, null=False, help_text="message author name")
 
-    @property
-    def user_profile_link(self):
-        return f"({self.from_user_name})[{USER_PROFILE}{self.from_user_id}]"
+    def __str__(self):
+        return f"{self.chat_username} {self.message_date}"
+
+    __repr__ = __str__
 
     class Meta:
         verbose_name = "Query Result"

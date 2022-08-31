@@ -1,3 +1,4 @@
+from asgiref.sync import sync_to_async
 from django.db import models
 
 
@@ -23,3 +24,6 @@ class GetOrNoneManager(models.Manager):
             return self.get(**kwargs)
         except self.model.DoesNotExist:
             return None
+
+    async def aget_or_none(self, **kwargs):
+        return await sync_to_async(self.get_or_none)(**kwargs)

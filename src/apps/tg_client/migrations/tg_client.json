@@ -1,0 +1,42 @@
+[
+{
+    "model": "tg_client.clientsession",
+    "pk": 1,
+    "fields": {
+        "name": "search",
+        "login_status": 1
+    }
+},
+{
+    "model": "tg_client.clientsession",
+    "pk": 2,
+    "fields": {
+        "name": "bot",
+        "login_status": 1
+    }
+},
+{
+    "model": "tg_client.login",
+    "pk": 1,
+    "fields": {
+        "have_to_send_code": false,
+        "bot_token": null,
+        "phone_number": "",
+        "code": "",
+        "passcode": null,
+        "hash_code": ""
+    }
+},
+{
+    "model": "tg_client.login",
+    "pk": 2,
+    "fields": {
+        "have_to_send_code": false,
+        "bot_token": "",
+        "phone_number": "",
+        "code": "",
+        "passcode": null,
+        "hash_code": ""
+    }
+}
+]

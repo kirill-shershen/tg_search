@@ -2,14 +2,15 @@ from apps.tg_client.models import ClientSession
 from apps.tg_client.models import Login
 from apps.tg_client.models import LoginStatus
 from apps.tg_client.sessions import DjangoSession
+from asgiref.sync import sync_to_async
 from config.logger import logger
 from config.telegram import CLIENT_SESSION_BOT
 from config.telegram import CLIENT_SESSION_SEARCH
 from config.telegram import MAX_ANSWERS_PER_REQUEST
 from config.telegram import TELEGRAM_API_HASH
 from config.telegram import TELEGRAM_API_ID
-from telethon import TelegramClient
 from telethon.errors import SessionPasswordNeededError
+from telethon.sync import TelegramClient
 from telethon.tl import functions
 from telethon.tl import types
 from telethon.tl.types import InputPeerEmpty
@@ -20,8 +21,10 @@ from telethon.tl.types.messages import ChannelMessages
 def get_client(client_session: ClientSession = None) -> TelegramClient:
     """Get TelegramClient with the custom session or the default search session."""
     if not client_session:
-        client_session = ClientSession.objects.filter(name=CLIENT_SESSION_SEARCH).first()
-    return TelegramClient(DjangoSession(client_session=client_session), TELEGRAM_API_ID, TELEGRAM_API_HASH)  # type: ignore
+        client_session = ClientSession.objects.select_related("session").filter(name=CLIENT_SESSION_SEARCH).first()
+    return TelegramClient(
+        DjangoSession(client_session=client_session), TELEGRAM_API_ID, TELEGRAM_API_HASH  # type: ignore
+    )
 
 
 def get_bot_client() -> TelegramClient:
@@ -84,12 +87,12 @@ async def connect_client(client_session: ClientSession) -> None:
 
 
 async def re_connect_clients() -> None:
-    for login in Login.objects.filter(have_to_send_code=True):
+    async for login in Login.objects.filter(have_to_send_code=True):
         phone_hash = await send_code_request(login.client_session, login.phone_number)
         login.hash_code = phone_hash
         login.have_to_send_code = False
         login.save()
-    for login in Login.objects.filter(code__isnull=False):
+    async for login in Login.objects.filter(code__isnull=False):
         if login.bot_token:
             login_result = await login_bot(login.client_session, login.bot_token)
         else:
@@ -102,7 +105,7 @@ async def re_connect_clients() -> None:
             logger.debug(f"Login successfully for client: {login.client_session.name}")
         else:
             logger.debug(f"Login failed for client: {login.client_session.name}")
-        for client in ClientSession.objects.filter(login_status=LoginStatus.LOGIN_WAITING_FOR_TELEGRAM_CLIENT):
+        async for client in ClientSession.objects.filter(login_status=LoginStatus.LOGIN_WAITING_FOR_TELEGRAM_CLIENT):
             await connect_client(client_session=client)
 
 
@@ -110,7 +113,7 @@ async def normalize_results(results: ChannelMessages, chat_name: str) -> list:
     if not results:
         return []
 
-    messages = []
+    messages: list[dict] = []
     for message in results.messages:
         if not message.message:
             continue
@@ -120,16 +123,17 @@ async def normalize_results(results: ChannelMessages, chat_name: str) -> list:
             from_id = peer.channel_id
         else:
             from_id = peer.user_id
-        messages.append(
-            {
-                "message_date": message.date,
-                "message": message.message,
-                "message_id": message.id,
-                "chat_id": message.peer_id.channel_id,
-                "chat_username": chat_name,
-                "from_user_id": from_id,
-            }
-        )
+        if message.message not in [di["message"] for di in messages]:
+            messages.append(
+                {
+                    "message_date": message.date,
+                    "message": message.message,
+                    "message_id": message.id,
+                    "chat_id": message.peer_id.channel_id,
+                    "chat_username": chat_name,
+                    "from_user_id": from_id,
+                }
+            )
     return messages
 
 
@@ -150,12 +154,11 @@ def get_average_results(messages: list[list]) -> list:
     return result
 
 
-async def get_search_request(query: str, chats: list) -> list:
-    telegram_client = get_client()
-    await telegram_client.start()
+async def get_search_request(client: TelegramClient, query: str, chats: list) -> list:
+    await client.connect()
     results = []
     for chat in chats:
-        chat_messages = await telegram_client(
+        chat_messages = await client(
             functions.messages.SearchRequest(
                 filter=types.InputMessagesFilterEmpty(),
                 peer=chat.username,
@@ -175,7 +178,7 @@ async def get_search_request(query: str, chats: list) -> list:
         chat_messages = await normalize_results(results=chat_messages, chat_name=chat.username)
         results.append(chat_messages)
 
-    await telegram_client.disconnect()
+    await client.disconnect()
     return sorted(
         get_average_results(results), key=lambda dictionary: dictionary["message_date"].timestamp(), reverse=True
     )

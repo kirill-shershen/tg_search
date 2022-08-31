@@ -4,6 +4,7 @@ from core.models import GetOrNoneManager
 from core.models import TimeStampedModel
 from django.db import models
 from django.db.models import Index
+from django.utils import timezone
 from versatileimagefield.fields import VersatileImageField
 
 
@@ -34,7 +35,7 @@ class UserChat(TimeStampedModel):
     chat_id = models.PositiveIntegerField(null=False, default=0, help_text="telegram chat id")
 
     def __str__(self):
-        return f"{self.user} {self.username}"
+        return f"{self.username}"
 
     __repr__ = __str__
 
@@ -47,7 +48,7 @@ class UserChat(TimeStampedModel):
 
 class SearchQueryManager(models.Manager):
     def today(self, **kwargs):
-        return self.filter(created_at__date=datetime.today().date(), **kwargs)
+        return self.filter(created_at__date=timezone.now().date(), **kwargs)
 
 
 class SearchQuery(TimeStampedModel):
@@ -86,7 +87,7 @@ class QueryResult(TimeStampedModel):
 
 
 class ChatText(TimeStampedModel):
-    name = models.CharField(max_length=200, null=False, blank=False, help_text="name of text")
+    name = models.CharField(max_length=200, null=False, unique=True, help_text="name of text")
     text = models.TextField(help_text="text for chat")
 
     class Meta:

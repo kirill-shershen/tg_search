@@ -1,11 +1,7 @@
-from .base import *
+from .base import *  # type: ignore
 
 
-DEBUG = os.getenv("DEBUG", True)
-
-SECRET_KEY = os.getenv("SECRET_KEY_BOT", "123")
-
-INSTALLED_APPS = LOCAL_APPS
+SECRET_KEY = os.getenv("SECRET_KEY_BACK", "123")
 
 DATABASES = {
     "default": {

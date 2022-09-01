@@ -21,21 +21,23 @@ from apps.bot.models import UserChat
 from apps.tg_client.helpers import get_bot_client
 from apps.tg_client.helpers import get_client
 from apps.tg_client.helpers import get_search_request
-from apps.tg_client.helpers import re_connect_clients
+from apps.tg_client.helpers import reconnect_client
 from asgiref.sync import sync_to_async
 from config.logger import logger
 from config.telegram import BOT_RECONNECT_TIMER_MIN
 from config.telegram import CHAT_TEXT_ADD_CHAT
 from config.telegram import CHAT_TEXT_DELETE_CHAT
 from config.telegram import CHAT_TEXT_SEARCH
+from config.telegram import CLIENT_SESSION_BOT
+from config.telegram import CLIENT_SESSION_SEARCH
 from config.telegram import MAX_GROUPS_PER_USER
 from config.telegram import MAX_REQUESTS_PER_DAY
 from telethon import Button
 from telethon import events
 
 
+# while True:
 client = get_bot_client()
-client.start()
 search_client = get_client()
 
 
@@ -86,6 +88,7 @@ async def get_tg_user(event) -> User:
             user_id=event.chat.id,
             phone=event.chat.phone,
         )
+        logger.info(f"added new user {tg_user=}")
     return tg_user
 
 
@@ -119,6 +122,13 @@ async def callback_del(event):
             await event.edit(await get_delete_chat_message(), buttons=keyboard, parse_mode="html")
         else:
             await send_choose_action(event, edit=True)
+
+
+@events.register(events.NewMessage(pattern="(?i)отмена"))
+async def cancel_action(event) -> None:
+    async with event.client.conversation(event.chat) as conversation:
+        await send_choose_action(event=conversation)
+        return conversation.cancel()
 
 
 @events.register(events.NewMessage(pattern="/start"))
@@ -164,6 +174,7 @@ async def search(event):
 
         query_search = await SearchQuery.objects.acreate(user=tg_user, query=search_request)
         results = await get_search_request(client=search_client, query=search_request, chats=chat_list)
+        logger.debug(f"{results=}")
         await QueryResult.objects.abulk_create([QueryResult(query=query_search, **result) for result in results])
         # telegram message limit 4096
         message = await get_result_message(messages=results, query=search_request)
@@ -178,8 +189,8 @@ async def add_chat(event):
 
         chat_list = await sync_to_async(list)(UserChat.objects.filter(user=tg_user))
         if len(chat_list) >= MAX_GROUPS_PER_USER:
-            await conversation.cancel()
-            return await conversation.send_message(await get_add_chat_reject_max(), buttons=get_keyboard())
+            await conversation.send_message(await get_add_chat_reject_max(), buttons=get_keyboard())
+            return conversation.cancel()
 
         await conversation.send_message(await get_add_chat_message(chat_list), buttons=get_cancel_keyboard())
         while True:
@@ -227,17 +238,20 @@ async def delete_chat(event):
 
 
 async def main():
-
-    await client.connect()
-    for f in (start, callback_del, add_chat, delete_chat, search):
+    for f in (start, callback_del, add_chat, delete_chat, search, cancel_action):
         client.add_event_handler(f)
+
     while True:
-        await asyncio.sleep(30)
+        await asyncio.sleep(10)
+        await client.connect()
         if not await client.is_user_authorized():
-            await re_connect_clients()
-            await asyncio.sleep(BOT_RECONNECT_TIMER_MIN)
+            await reconnect_client(client=CLIENT_SESSION_BOT)
+            client.start()
+        await search_client.connect()
+        if not await search_client.is_user_authorized():
+            await reconnect_client(client=CLIENT_SESSION_SEARCH)
+        await asyncio.sleep(BOT_RECONNECT_TIMER_MIN)
 
 
 def run_pooling():
-    # asyncio.run(main())
     asyncio.get_event_loop().run_until_complete(main())

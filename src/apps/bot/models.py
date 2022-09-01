@@ -1,5 +1,3 @@
-from datetime import datetime
-
 from core.models import GetOrNoneManager
 from core.models import TimeStampedModel
 from django.db import models
@@ -71,10 +69,10 @@ class QueryResult(TimeStampedModel):
     query = models.ForeignKey("bot.SearchQuery", on_delete=models.CASCADE, null=True, related_name="results")
     message = models.CharField(max_length=100, null=False, help_text="query result")
     message_date = models.DateTimeField(blank=True, null=True, help_text="telegram message date")
-    message_id = models.IntegerField(null=False, help_text="message id")
-    chat_id = models.IntegerField(null=False, help_text="chat id")
+    message_id = models.PositiveBigIntegerField(null=False, help_text="message id")
+    chat_id = models.PositiveBigIntegerField(null=False, help_text="chat id")
     chat_username = models.CharField(max_length=100, default="", null=False, help_text="chat username")
-    from_user_id = models.IntegerField(null=False, help_text="message author id")
+    from_user_id = models.PositiveBigIntegerField(null=False, help_text="message author id")
 
     def __str__(self):
         return f"{self.chat_username} {self.message_date}"

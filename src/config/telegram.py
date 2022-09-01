@@ -14,7 +14,7 @@ BOT_RECONNECT_TIMER_MIN = int(os.environ.get("BOT_RECONNECT_TIMER_MIN", 1)) * 60
 MAX_GROUPS_PER_USER = int(os.environ.get("MAX_GROUPS_PER_USER", 5))
 MAX_ANSWERS_PER_REQUEST = int(os.environ.get("MAX_ANSWERS_PER_REQUEST", 40))
 MAX_REQUESTS_PER_DAY = int(os.environ.get("MAX_REQUESTS_PER_DAY", 20))
-
+MAX_LENGTH_FOR_REQUEST = int(os.environ.get("MAX_LENGTH_FOR_REQUEST", 100))
 CHAT_TEXT_START = os.environ.get("CHAT_TEXT_START", "start")
 CHAT_TEXT_ADD_CHAT = os.environ.get("CHAT_TEXT_ADD_CHAT", "➕ чат")
 CHAT_TEXT_WRONG_CHAT = os.environ.get("CHAT_TEXT_WRONG_CHAT", "wrong")

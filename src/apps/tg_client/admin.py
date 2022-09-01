@@ -1,3 +1,4 @@
+import asyncio
 from asyncio import run
 
 from apps.tg_client.helpers import login_bot
@@ -8,9 +9,13 @@ from apps.tg_client.models import ClientSession
 from apps.tg_client.models import Login
 from apps.tg_client.models import LoginStatus
 from apps.tg_client.models import Session
+from asgiref.sync import async_to_sync
 from config.logger import logger
 from django.contrib import admin
-from django.db import transaction
+
+
+async def stop():
+    await asyncio.sleep(3)
 
 
 @admin.action(description="Send request code")
@@ -18,7 +23,7 @@ def send_request_code(modeladmin, request, queryset):
     """Send requests and receive hash codes for all selected Logins"""
     for qs in queryset:
         if qs.have_to_send_code:
-            hash_code = run(send_code_request(qs.client_session, qs.phone_number))
+            hash_code = run(send_code_request(client_session=qs.client_session, phone_number=qs.phone_number))
             qs.hash_code = hash_code
             qs.have_to_send_code = False
             qs.save()
@@ -27,10 +32,9 @@ def send_request_code(modeladmin, request, queryset):
 @admin.action(description="Login")
 def login(modeladmin, request, queryset):
     """Send requests and receive hash codes for all selected Logins"""
-    is_user_authorized = False
     for qs in queryset:
         if qs.bot_token:
-            is_user_authorized = run(login_bot(client_session=qs.client_session, bot_token=qs.bot_token))
+            is_user_authorized = async_to_sync(login_bot)(client_session=qs.client_session, bot_token=qs.bot_token)
             logger.debug(f"{qs.bot_token} authorized {is_user_authorized}")
         elif all([qs.code, qs.phone_number, qs.hash_code]):
             is_user_authorized = run(

@@ -19,7 +19,7 @@
     "model": "tg_client.login",
     "pk": 1,
     "fields": {
-        "have_to_send_code": false,
+        "have_to_send_code": true,
         "bot_token": null,
         "phone_number": "",
         "code": "",
@@ -31,7 +31,7 @@
     "model": "tg_client.login",
     "pk": 2,
     "fields": {
-        "have_to_send_code": false,
+        "have_to_send_code": true,
         "bot_token": "",
         "phone_number": "",
         "code": "",

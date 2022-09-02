@@ -17,7 +17,8 @@ class User(TimeStampedModel):
     Index(fields=["user_id"], name="telegram_user_id_idx")
 
     def __str__(self):
-        return f"TG:{self.username}"
+        username = self.username if self.username else self.first_name
+        return f"TG:{username}"
 
     __repr__ = __str__
 

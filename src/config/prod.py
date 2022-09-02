@@ -2,7 +2,7 @@ import os
 
 from .base import *  # type: ignore
 
-DEBUG = True
+DEBUG = os.getenv("DEBUG", True)
 
 DATABASES = {
     "default": {

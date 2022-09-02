@@ -1,0 +1,24 @@
+name: search gitflow
+
+on:
+  push:
+    branches: [ main ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          repository: ${{env.gitUserName}}/tg_search
+          path: tg_search
+      - name: azure login
+        uses: Azure/login@v1
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+          allow-no-subscriptions: true
+      - name: azure pull-build-run
+        uses: azure/CLI@v1
+        with:
+          azcliversion: 2.0.72
+          inlineScript: az vm run-command invoke -g ks_group -n ks --command-id RunShellScript --scripts "cd /home/ks/tg_search && docker-compose build && docker-compose down && docker-compose up -d"

@@ -16,5 +16,5 @@ jobs:
       - name: azure pull-build-run
         uses: azure/CLI@v1
         with:
-          azcliversion: 2.0.72
+          azcliversion: 2.39.0
           inlineScript: az vm run-command invoke -g ks_group -n ks --command-id RunShellScript --scripts "cd /home/ks/tg_search && git pull && docker-compose build && docker-compose down && docker-compose up -d"

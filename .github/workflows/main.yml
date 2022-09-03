@@ -8,13 +8,16 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - name: azure login
-        uses: Azure/login@v1
+      - name: pull-build-restart
+        uses: appleboy/ssh-action@master
         with:
-          creds: ${{ secrets.AZURE_CREDENTIALS }}
-          allow-no-subscriptions: true
-      - name: azure pull-build-run
-        uses: azure/CLI@v1
-        with:
-          azcliversion: 2.39.0
-          inlineScript: az vm run-command invoke -g ks_group -n ks --command-id RunShellScript --scripts "cd /home/ks/tg_search && git pull && docker-compose build && docker-compose down && docker-compose up -d"
+          host: ${{ secrets.AZURE_HOST }}
+          username: ${{ secrets.AZURE_USERNAME }}
+          key: ${{ secrets.AZURE_KEY }}
+          port: ${{ secrets.AZURE_PORT }}
+          script: |
+            cd /home/ks/tg_search
+            sudo hg pull
+            sudo docker-compose build 
+            sudo docker-compose down 
+            sudo docker-compose up -d

@@ -1,3 +1,4 @@
+[![search gitflow](https://github.com/kirill-shershen/tg_search/actions/workflows/main.yml/badge.svg)](https://github.com/kirill-shershen/tg_search/actions/workflows/main.yml)
 # tg_search
 
 Another one telegram bot that can search for specified open groups. The result is given in one message with a links to the source. Django admin panel for managing.

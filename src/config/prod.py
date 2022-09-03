@@ -4,6 +4,14 @@ from .base import *  # type: ignore
 
 DEBUG = os.getenv("DEBUG", True)
 
+ALLOW_HOST = os.environ.get("ALLOW_HOST", "0.0.0.0")
+
+ALLOWED_HOSTS = [
+    ALLOW_HOST,
+    f"www.{ALLOW_HOST}",
+    "127.0.0.1",
+]
+
 DATABASES = {
     "default": {
         "ENGINE": "django.db.backends.postgresql",

@@ -19,7 +19,7 @@ jobs:
             cd /home/${{ secrets.AZURE_USERNAME }}/tg_search
             ls -la
             eval `ssh-agent`
-            ssh-add /home/${{ secrets.AZURE_USERNAME }}/id_azure
+            ssh-add /home/${{ secrets.AZURE_USERNAME }}/.ssh/id_azure
             sudo git pull
             sudo docker-compose build 
             sudo docker-compose down 

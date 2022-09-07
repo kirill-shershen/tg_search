@@ -243,9 +243,10 @@ async def callback_group_del(event):
 
     user = user_chat.user
     if user.user_id == event.sender_id:
-        await sync_to_async(user_chat.delete)()
-
-        await get_group_list(event, edit=True, user=user)
+        try:
+            await sync_to_async(user_chat.delete)()
+        finally:
+            await get_group_list(event, edit=True, user=user)
 
 
 @events.register(events.NewMessage(pattern="/help"))

@@ -114,7 +114,6 @@ async def do_search_event(event, edit: bool = False):
                 link_preview=False,
                 parse_mode="html",
             )
-            requests_per_day_left -= 1
 
 
 async def get_group_list(event, edit=False, user: User = None):
@@ -135,11 +134,16 @@ async def get_requests_today_remaining(user: User):
 
 
 async def exit_check(conversation, response: str, requests_per_day_left: int) -> bool:
-    if response.lower() in ["отмена", "/groups", "/search"] or requests_per_day_left == 0:
+    exit_status = False
+    if requests_per_day_left == 0:
+        await conversation.send_message(await get_daily_limit_message())
         await conversation.cancel_all()
-        return True
-    else:
-        return False
+        exit_status = True
+    if response.lower() in ["отмена", "/groups", "/search"]:
+        await conversation.cancel_all()
+        exit_status = True
+
+    return exit_status
 
 
 async def get_and_save_query_result(user: User, request: str, chat_list: list) -> str:
@@ -172,6 +176,7 @@ async def send_error_message(event, edit=False):
 
 @events.register(events.CallbackQuery(data="search"))
 async def callback_search(event):
+    await _force_close_all_conversation(event)
     await do_search_event(event, edit=True)
 
 
@@ -273,6 +278,7 @@ async def groups_command(event):
 
 @events.register(events.NewMessage(pattern="/search"))
 async def search_command(event):
+    await _force_close_all_conversation(event)
     await do_search_event(event)
 
 

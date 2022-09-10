@@ -14,6 +14,7 @@ from config.telegram import MAX_LENGTH_FOR_REQUEST
 from config.telegram import TELEGRAM_API_HASH
 from config.telegram import TELEGRAM_API_ID
 from telethon import TelegramClient
+from telethon.errors import FloodWaitError
 from telethon.errors import SessionPasswordNeededError
 from telethon.tl import functions
 from telethon.tl import types
@@ -79,9 +80,14 @@ async def send_code_request(client_session: ClientSession, phone_number: str) ->
     os.environ["DJANGO_ALLOW_ASYNC_UNSAFE"] = "true"
     client = get_client(client_session=client_session)
     await client.connect()
-    result = await client.send_code_request(phone_number)
-    await client.disconnect()
-    os.environ["DJANGO_ALLOW_ASYNC_UNSAFE"] = "false"
+    try:
+        result = await client.send_code_request(phone_number)
+    except FloodWaitError as e:
+        logger.error(str(e))
+        return "try again later"
+    finally:
+        await client.disconnect()
+        os.environ["DJANGO_ALLOW_ASYNC_UNSAFE"] = "false"
     return result.phone_code_hash
 
 

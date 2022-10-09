@@ -11,16 +11,17 @@ jobs:
       - name: pull-build-restart
         uses: appleboy/ssh-action@master
         with:
-          host: ${{ secrets.AZURE_HOST }}
-          username: ${{ secrets.AZURE_USERNAME }}
-          key: ${{ secrets.AZURE_KEY }}
-          port: ${{ secrets.AZURE_PORT }}
+          host: ${{ secrets.HOST }}
+          username: ${{ secrets.USERNAME }}
+          password: ${{ secrets.PASSWORD }}
+          key: ${{ secrets.KEY }}
+          port: ${{ secrets.PORT }}
           script: |
-            cd /home/${{ secrets.AZURE_USERNAME }}/tg_search
+            cd ~/tg_search
             ls -la
             eval `ssh-agent`
-            ssh-add /home/${{ secrets.AZURE_USERNAME }}/.ssh/id_azure
+            ssh-add ~/.ssh/id_azure
             git pull
-            sudo docker-compose build 
-            sudo docker-compose down 
+            sudo docker-compose build
+            sudo docker-compose down
             sudo docker-compose up -d

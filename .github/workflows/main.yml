@@ -13,14 +13,13 @@ jobs:
         with:
           host: ${{ secrets.HOST }}
           username: ${{ secrets.USERNAME }}
-          password: ${{ secrets.PASSWORD }}
           key: ${{ secrets.KEY }}
           port: ${{ secrets.PORT }}
           script: |
             cd ~/tg_search
             ls -la
             eval `ssh-agent`
-            ssh-add ~/.ssh/id_azure
+            ssh-add ~/.ssh/id_timeweb
             git pull
             sudo docker-compose build
             sudo docker-compose down

@@ -35,7 +35,7 @@ x-web:
     CHAT_TEXT_SUCCESS: ${CHAT_TEXT_SUCCESS}
 services:
   db:
-    image: postgres:14
+    image: postgres:15
     container_name: db
     restart: always
     volumes:
@@ -45,8 +45,6 @@ services:
       - POSTGRES_USER=${DB_USER}
       - POSTGRES_PASSWORD=${DB_PASSWORD}
       - POSTGRES_DB=${DB_NAME}
-    ports:
-      - "5432:5432"
 
   web:
     <<: *x-web-common

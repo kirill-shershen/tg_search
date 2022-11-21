@@ -35,8 +35,11 @@ client = get_bot_client()
 search_client = get_client()
 
 
-def get_chat_list_inline_keyboard() -> Button:
-    return Button.inline(text="Список групп", data="group_list")
+def get_chat_list_inline_keyboard() -> list[Button]:
+    return [
+        Button.inline(text="Список групп", data="group_list"),
+        Button.inline(text="Добавить группу", data="add_group"),
+    ]
 
 
 def get_cancel_to_group_inline_keyboard() -> list[list[Button]]:

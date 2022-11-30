@@ -42,12 +42,12 @@ def get_chat_list_inline_keyboard() -> list[Button]:
     ]
 
 
-def get_cancel_to_group_inline_keyboard() -> list[list[Button]]:
+def get_cancel_to_group_inline_keyboard() -> Button:
     return Button.inline(text="Отмена", data="group_list")
 
 
-def get_cancel_to_help_inline_keyboard() -> list[list[Button]]:
-    return Button.inline(text="Отмена", data="help")
+def get_cancel_to_help_inline_keyboard() -> list[Button]:
+    return [Button.inline(text="Отмена", data="help")]
 
 
 def get_search_inline_keyboard() -> list:

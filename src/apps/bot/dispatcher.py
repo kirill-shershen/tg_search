@@ -151,12 +151,16 @@ async def exit_check(conversation, response: str, requests_per_day_left: int) ->
 
 async def get_and_save_query_result(user: User, request: str, chat_list: list) -> str:
     query_search = await SearchQuery.objects.acreate(user=user, query=request)
-    results = await get_search_request(client=search_client, query=request, chats=chat_list)
-    logger.debug(f"{results=}")
-    await QueryResult.objects.abulk_create([QueryResult(query=query_search, **result) for result in results])
-    return await get_result_message(
-        messages=results, query=request, requests_per_day_left=await get_requests_today_remaining(user=user)
-    )
+    try:
+        results = await get_search_request(client=search_client, query=request, chats=chat_list)
+    except Exception as e:
+        return f"failed to search in group: {str(e)}"
+    else:
+        logger.debug(f"{results=}")
+        await QueryResult.objects.abulk_create([QueryResult(query=query_search, **result) for result in results])
+        return await get_result_message(
+            messages=results, query=request, requests_per_day_left=await get_requests_today_remaining(user=user)
+        )
 
 
 async def _force_close_all_conversation(event):
@@ -246,7 +250,7 @@ async def callback_group_del(event):
 
     try:
         user_chat = await UserChat.objects.select_related("user").aget(pk=chat_id)
-    except:
+    except Exception:
         return
 
     user = user_chat.user

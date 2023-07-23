@@ -1,12 +1,12 @@
 [![search gitflow](https://github.com/kirill-shershen/tg_search/actions/workflows/main.yml/badge.svg)](https://github.com/kirill-shershen/tg_search/actions/workflows/main.yml)
 # tg_search
 
-Another one telegram bot that can search for specified open groups. The result is given in one message with a links to the source. Django admin panel for managing.
+Another one telegram bot that can search for specified open groups. The result is given in one message with links to the source. Django admin panel for managing.
 
 
 ## Environment Variables
 
-To run this project, you will need to add the following environment variables.
+To run this project, you must add the following environment variables.
 
 `TELEGRAM_BOT_API_KEY`
 
@@ -35,10 +35,10 @@ Clone the project and install virtual env
   docker-compose exec web python manage.py createsuperuser
 ```
 
-Next step you have to run django admin panel to authorize in telegram.
-In the login model page we need to fill phone number in both records and bot token only for **bot**
+Next step you have to run the Django admin panel to authorize in telegram.
+In the login model page, we need to fill phone number in both records and the bot token only for **bot**
 
-After that you have to execute **send request code** action and save received code to each record.
+After that, you have to execute **send request code** action and save the received code to each record.
 Then execute **login** action on each record.
 
 Now bot will work

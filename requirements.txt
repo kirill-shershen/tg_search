@@ -6,13 +6,13 @@ django-versatileimagefield==2.2
 gunicorn==20.1.0
 h11==0.13.0
 libmagic==1.0
-Pillow==9.2.0
+Pillow==9.3.0
 psycopg2==2.9.3
 pyaes==1.6.1
 pyasn1==0.4.8
 python-magic==0.4.27
 rsa==4.9
-sqlparse==0.4.2
+sqlparse==0.4.4
 Telethon==1.24.0
 tzdata==2022.2
 whitenoise==6.2.0

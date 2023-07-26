@@ -35,11 +35,19 @@ Clone the project and install virtual env
   docker-compose exec web python manage.py createsuperuser
 ```
 
-Next step you have to run the Django admin panel to authorize in telegram.
-In the login model page, we need to fill phone number in both records and the bot token only for **bot**
+## Authorize
+For using Telethon you should get your API ID. You can do this with this [guide](https://docs.telethon.dev/en/stable/basic/signing-in.html).
 
-After that, you have to execute **send request code** action and save the received code to each record.
-Then execute **login** action on each record.
+Basically, you need a telegram bot to interact with users. And you need a telegram account to search through open chats.
+So you need to authorize to each of them.
+1. To do this you should run the Django admin panel and open the Client session model.
+2. We need to create records: 1 for the **bot** and 2 for the **account** with **login required** for both.
+3. Then you should create login records.
+   - For the **bot** you should select the bot client session, bot_token and phone number.
+   - For the **account** you should select the account client session and phone number
+4. Now select action **Send request code** for **account** and press Go. When you have received message from telegram you should save a code to **code** field.
+5. Then select **login** action on both of the records and press Go.
+6. In the client session model, all records become **Login Waiting For Telegram Client**
 
 Now bot will work
 ```bash
